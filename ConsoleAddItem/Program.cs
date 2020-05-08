@@ -111,39 +111,48 @@ namespace ConsoleAddItem
             ItemType item = new ItemType();
 
             // item title
-            item.Title = "Test Item";
+            item.Title = "Goudon EX";
             // item description
-            item.Description = "eBay SDK sample test item";
+            item.Description = "Groudon EX";
 
             // listing type
             item.ListingType = ListingTypeCodeType.Chinese;
             // listing price
             item.Currency = CurrencyCodeType.USD;
             item.StartPrice = new AmountType();
-            item.StartPrice.Value = 20;
+            item.StartPrice.Value = 99.99;
             item.StartPrice.currencyID = CurrencyCodeType.USD;
 
             // listing duration
-            item.ListingDuration = "Days_3"; 
+            item.ListingDuration = "Days_7"; 
 
             // item location and country
-            item.Location = "San Jose";
+            item.Location = "Rochester, New York";
             item.Country = CountryCodeType.US;
 
             // listing category, 
             CategoryType category = new CategoryType();
-            category.CategoryID = "11104"; //CategoryID = 11104 (CookBooks) , Parent CategoryID=267(Books)
+            category.CategoryID = "2611"; //CategoryID = 11104 (CookBooks) , Parent CategoryID=267(Books)
             item.PrimaryCategory = category;
              
             // item quality
             item.Quantity = 1;
 
             // item condition, New
-            item.ConditionID = 1000;
+            item.ConditionID = 3000;
 
             // item specifics
             item.ItemSpecifics = buildItemSpecifics();
-            
+
+            // picture
+            var pics = new PictureDetailsType();
+            var s = new StringCollection();
+            s.Add("https://guntherkroth.com/pic/IMG_1334.JPG");
+            pics.PictureURL = s;
+            item.PictureDetails = pics;
+
+
+
             Console.WriteLine("Do you want to use Business policy profiles to list this item? y/n");
             String input = Console.ReadLine();
             if (input.ToLower().Equals("y"))
@@ -158,7 +167,7 @@ namespace ConsoleAddItem
                     new BuyerPaymentMethodCodeType[] { BuyerPaymentMethodCodeType.PayPal }
                     );
                 // email is required if paypal is used as payment method
-                item.PayPalEmailAddress = "me@ebay.com";
+                item.PayPalEmailAddress = "goose.bones12@gmail.com";
 
                 // handling time is required
                 item.DispatchTimeMax = 1;
@@ -171,7 +180,7 @@ namespace ConsoleAddItem
             }
             //item Start Price
             AmountType amount = new AmountType();
-            amount.Value = 2.8;
+            amount.Value = 99.99;
             amount.currencyID = CurrencyCodeType.USD;
             item.StartPrice = amount;
 
@@ -220,11 +229,14 @@ namespace ConsoleAddItem
             // Shipping details
             ShippingDetailsType sd = new ShippingDetailsType();
 
-            sd.ApplyShippingDiscount = true;
+
+
+
+
+            sd.ApplyShippingDiscount = false;
             AmountType amount = new AmountType();
-            amount.Value = 2.8;
+            amount.Value = 2.95;
             amount.currencyID = CurrencyCodeType.USD;
-            sd.PaymentInstructions = "eBay .Net SDK test instruction.";
 
             // Shipping type and shipping service options
             sd.ShippingType = ShippingTypeCodeType.Flat;
@@ -261,15 +273,15 @@ namespace ConsoleAddItem
 	        //create the content of item specifics
             NameValueListTypeCollection nvCollection = new NameValueListTypeCollection();
             NameValueListType nv1 = new NameValueListType();
-            nv1.Name = "Platform";
+            nv1.Name = "Set";
             StringCollection nv1Col = new StringCollection();
-            String[] strArr1 = new string[] { "Microsoft Xbox 360" };
+            String[] strArr1 = new string[] { "EX Crystal Guardians" };
             nv1Col.AddRange(strArr1);
             nv1.Value = nv1Col;
             NameValueListType nv2 = new NameValueListType();
-            nv2.Name = "Genre";
+            nv2.Name = "Rarity";
             StringCollection nv2Col = new StringCollection();
-            String[] strArr2 = new string[] { "Simulation" };
+            String[] strArr2 = new string[] { "Ultra Rare" };
             nv2Col.AddRange(strArr2);
             nv2.Value = nv2Col;
             nvCollection.Add(nv1);

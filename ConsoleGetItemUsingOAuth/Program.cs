@@ -41,6 +41,8 @@ namespace ConsoleGetItemUsingOAuth
                 Console.WriteLine();
 
                 //Handle the result returned
+                var item = apiCall.Item;
+                Console.WriteLine("ItemTitle: " + item.Title.ToString());
                 Console.WriteLine("ItemID: " + apiCall.Item.ItemID.ToString());                
                 Console.WriteLine();
                 Console.WriteLine();
