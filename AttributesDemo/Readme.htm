@@ -1,0 +1,60 @@
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+<html>
+<head>
+<STYLE TYPE="text/css">BODY { font-size: 11pt; font-family: arial; }</STYLE>
+<title>Readme for the Java attributesDemo Sample</title>
+<style type="text/css">
+table { width : 65%; border : none; empty-cells : show; }
+table.note { border: .5px #408080; }
+table.nav { margin-left : -4%; }
+.navbarUniv { width:95%; margin:0; border-collapse:collapse; margin-bottom:15px; }
+.navlinkUniv { color:#999999; margin:0 10px; }
+td.navbarUniv { background:white; }
+th, .heading, th.heading { font-size: 12px; background-color: #CCCC99; vertical-align : top; text-align : left; padding: 4px 4px 4px 4px; }
+th.clear, td.clear { background-color: #FFFFFF; }
+td.future { color: Gray; }
+td.current { font-weight: bold; background-color: #FFFF66; }
+td.date { white-space: nowrap; }
+td.note { color: #880000; background-color: #E6F8D6; padding: 4px 4px 4px 4px;}
+td.version { font-weight: bold; white-space: nowrap; }
+td, div.CellBody { font-size: 12px; background-color: #EFEFEF; vertical-align : top; padding: 0px 4px 0px 4px;}
+div.Table {text-align: left}
+div.TableTitle, div.RefHeading { font-weight: bold; }
+</style>
+</head>
+
+<body>
+
+<h2>Readme for the C#/WinForm attributesDemo Sample</h2>
+
+<p>
+This sample simulates a simple sell your item(SYI) flow, it shows how to use eBay APIs to:
+<ul>
+<li>handle item attributes/specifics,
+<li>handle eBay meta-data like listing type/duration, payment methods, shipping service, etc.
+<li>cache eBay meta-data on local driver(see Helper Library for detail).
+</ul>
+
+<p>
+<h3>API Calls Used:</h3>
+<ul>
+ <li><b>GetAttributesXSL, GetAttributesCS, GetCategory2CS</b>, used in eBay Attributes Library.
+ <li><b>GetCategories</b>, for category list.
+ <li><b>GeteBayDetails</b>, for meta-data like return policy, shipping service, ship to location.
+ <li><b>GeteCategoryFeatures</b>, for meta-data like return policy enabled, item specifics enabled, listing type, listing duration, payment methods.
+ <li><b>GetCategorySpecifics</b>, for item specifics
+ <li><b>AddItem</b>, for listing to eBay
+</ul>
+
+<p>
+<h3>Attributes Demo Architecture</h3>
+<img src="img/arch.jpg"/>
+
+<p>
+<p>
+<h3>Attributes Demo Page/Call Flow</h3>
+<img src="img/flow.jpg"/>
+
+</body>
+</html>
+

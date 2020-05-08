@@ -1,0 +1,31 @@
+<HTML>
+	<HEAD>
+		<TITLE>WebForm1</TITLE>
+		<META http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<META content="Microsoft FrontPage 4.0" name="GENERATOR">
+		<META content="Visual Basic 7.0" name="CODE_LANGUAGE">
+		<META content="JavaScript" name="vs_defaultClientScript">
+		<META content="http://schemas.microsoft.com/intellisense/ie5" name="vs_targetSchema">
+	</HEAD>
+	<BODY MS_POSITIONING="GridLayout">
+		<p><b><a href="../../Source/HowToBuild.htm">Build SDK Kernel</a></b></p> 
+		<p><b>Build Sample for .NET:</b></p> 
+		<ol>
+			<li>
+                All .NET sample are configured&nbsp; to refer the SDK 
+                kernel&nbsp; libraries under&nbsp; <a href="../../">SDK home 
+                directory</a>. If you have rebuilt the SDK kernel (using&nbsp; 
+                Source\DOTNET.SOAP.sln) and changed its build configuration 
+                (e.g., from &quot;Release&quot; to &quot;Debug&quot; then run 
+                CopyDebug.bat) then you need to run batch file SwitchSDKRefConfig.bat 
+                to clean all the existing references for all samples before you 
+                building samples. Otherwise you may get referencing warning like 
+                &quot;eBay.Service...&quot;.</li>
+			<li>
+                Run Microsoft Visual Studio for .NET. to open CSharp Samples.sln.</li>
+			<li>
+                Rebuild all projects.</li>
+		</ol>
+        <p>&nbsp;</p>
+	</BODY>
+</HTML>
