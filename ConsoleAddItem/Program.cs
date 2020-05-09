@@ -124,7 +124,9 @@ namespace ConsoleAddItem
             item.StartPrice.currencyID = CurrencyCodeType.USD;
 
             // listing duration
-            item.ListingDuration = "Days_7"; 
+            item.ListingDuration = "Days_7";
+            var startTime = new DateTime(2020, 5, 11, 0, 30, 0, DateTimeKind.Utc);
+            item.ScheduleTime = startTime;
 
             // item location and country
             item.Location = "Rochester, New York";
@@ -176,7 +178,7 @@ namespace ConsoleAddItem
 
                 // return policy
                 item.ReturnPolicy = new ReturnPolicyType();
-                item.ReturnPolicy.ReturnsAcceptedOption = "ReturnsAccepted";
+                item.ReturnPolicy.ReturnsAcceptedOption = "ReturnsNotAccepted";
             }
             //item Start Price
             AmountType amount = new AmountType();
@@ -229,33 +231,36 @@ namespace ConsoleAddItem
             // Shipping details
             ShippingDetailsType sd = new ShippingDetailsType();
 
-
-
-
-
+            sd.ApplyShippingDiscountSpecified = true;
             sd.ApplyShippingDiscount = false;
-            AmountType amount = new AmountType();
-            amount.Value = 2.95;
-            amount.currencyID = CurrencyCodeType.USD;
+            sd.CalculatedShippingDiscount = null;
+
+            sd.FlatShippingDiscount = null;
+
+            sd.GlobalShipping = false;
+            sd.GlobalShippingSpecified = false;
+
+            sd.SellerExcludeShipToLocationsPreferenceSpecified = true;
+            sd.SellerExcludeShipToLocationsPreference = false;
+
 
             // Shipping type and shipping service options
             sd.ShippingType = ShippingTypeCodeType.Flat;
             ShippingServiceOptionsType shippingOptions = new ShippingServiceOptionsType();
-            shippingOptions.ShippingService = 
-                ShippingServiceCodeType.ShippingMethodStandard.ToString();
-            amount = new AmountType();
-            amount.Value = 2.0;
-            amount.currencyID = CurrencyCodeType.USD;
-            shippingOptions.ShippingServiceAdditionalCost = amount;
-            amount = new AmountType();
-            amount.Value = 1;
+            shippingOptions.ShippingService = ShippingServiceCodeType.USPSFirstClass.ToString();
+            shippingOptions.ExpeditedService = false;
+            shippingOptions.ExpeditedServiceSpecified = true;
+            shippingOptions.FreeShipping = false;
+            shippingOptions.FreeShippingSpecified = false;
+            shippingOptions.LocalPickup = false;
+            shippingOptions.LocalPickupSpecified = false;
+
+            var amount = new AmountType();
+            amount.Value = 2.95;
             amount.currencyID = CurrencyCodeType.USD;
             shippingOptions.ShippingServiceCost = amount;
-            shippingOptions.ShippingServicePriority = 1;
-            amount = new AmountType();
-            amount.Value = 1.0;
-            amount.currencyID = CurrencyCodeType.USD;
-            shippingOptions.ShippingInsuranceCost = amount;
+
+            shippingOptions.ShippingInsuranceCost = null;
 
             sd.ShippingServiceOptions = new ShippingServiceOptionsTypeCollection(
                 new ShippingServiceOptionsType[] { shippingOptions }
@@ -272,20 +277,48 @@ namespace ConsoleAddItem
         {        	  
 	        //create the content of item specifics
             NameValueListTypeCollection nvCollection = new NameValueListTypeCollection();
+            
             NameValueListType nv1 = new NameValueListType();
             nv1.Name = "Set";
             StringCollection nv1Col = new StringCollection();
             String[] strArr1 = new string[] { "EX Crystal Guardians" };
             nv1Col.AddRange(strArr1);
             nv1.Value = nv1Col;
+            
             NameValueListType nv2 = new NameValueListType();
             nv2.Name = "Rarity";
             StringCollection nv2Col = new StringCollection();
             String[] strArr2 = new string[] { "Ultra Rare" };
             nv2Col.AddRange(strArr2);
             nv2.Value = nv2Col;
+
+            NameValueListType nv3 = new NameValueListType();
+            nv3.Name = "Features";
+            StringCollection nv3Col = new StringCollection();
+            String[] strArr3 = new string[] { "Holo" };
+            nv3Col.AddRange(strArr3);
+            nv3.Value = nv3Col;
+
+            NameValueListType nv4 = new NameValueListType();
+            nv4.Name = "Featured Cards";
+            StringCollection nv4Col = new StringCollection();
+            String[] strArr4 = new string[] { "Groudon" };
+            nv4Col.AddRange(strArr4);
+            nv4.Value = nv4Col;
+
+            NameValueListType nv5 = new NameValueListType();
+            nv5.Name = "Quantity";
+            StringCollection nv5Col = new StringCollection();
+            String[] strArr5 = new string[] { "1" };
+            nv5Col.AddRange(strArr5);
+            nv5.Value = nv5Col;
+
+
             nvCollection.Add(nv1);
             nvCollection.Add(nv2);
+            nvCollection.Add(nv3);
+            nvCollection.Add(nv4);
+            nvCollection.Add(nv5);
             return nvCollection;
          }
     }
