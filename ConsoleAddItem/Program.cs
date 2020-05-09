@@ -5,6 +5,8 @@ using eBay.Service.Call;
 using eBay.Service.Core.Sdk;
 using eBay.Service.Core.Soap;
 using eBay.Service.Util;
+using System.IO;
+using System.Text;
 
 namespace ConsoleAddItem
 {
@@ -84,6 +86,7 @@ namespace ConsoleAddItem
                     ConfigurationManager.AppSettings["Environment.ApiServerUrl"];
                 //set Api Token to access eBay Api Server
                 ApiCredential apiCredential = new ApiCredential();
+                apiContext.EPSServerUrl = ConfigurationManager.AppSettings["Environment.EPSServerURL"];
                 apiCredential.eBayToken = 
                     ConfigurationManager.AppSettings["UserAccount.ApiToken"];
                 apiContext.ApiCredential = apiCredential;
@@ -149,10 +152,32 @@ namespace ConsoleAddItem
             // picture
             var pics = new PictureDetailsType();
             var s = new StringCollection();
-            s.Add("https://guntherkroth.com/pic/IMG_1334.JPG");
             pics.PictureURL = s;
-            item.PictureDetails = pics;
 
+
+            eBay.Service.EPS.eBayPictureService eps = new eBay.Service.EPS.eBayPictureService(GetApiContext());
+            UploadSiteHostedPicturesRequestType req = new UploadSiteHostedPicturesRequestType();
+
+            var path = new DirectoryInfo(@"C:\Program Files (x86)\eBay\eBay .NET SDK v1131 Release\Samples\C#\ConsoleAddItem\groudon");
+            var files = path.GetFiles();
+            var i = 0;
+            foreach (var file in files) 
+            {
+                byte[] arr = File.ReadAllBytes(file.FullName);
+                Base64BinaryType b = new Base64BinaryType();
+                b.Value = arr;
+                req.PictureName = file.FullName + i.ToString();
+                req.PictureData = b;
+
+                UploadSiteHostedPicturesResponseType res = eps.UpLoadSiteHostedPicture(req, file.FullName);
+                s.Add(res.SiteHostedPictureDetails.FullURL);
+
+                Console.WriteLine("Uploaded picture: " + i.ToString());
+                i++;
+            }
+
+
+            item.PictureDetails = pics;
 
 
             Console.WriteLine("Do you want to use Business policy profiles to list this item? y/n");
