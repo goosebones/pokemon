@@ -158,6 +158,7 @@ namespace ConsoleAddItem
             eBay.Service.EPS.eBayPictureService eps = new eBay.Service.EPS.eBayPictureService(GetApiContext());
             UploadSiteHostedPicturesRequestType req = new UploadSiteHostedPicturesRequestType();
 
+            
             var path = new DirectoryInfo(@"C:\Program Files (x86)\eBay\eBay .NET SDK v1131 Release\Samples\C#\ConsoleAddItem\groudon");
             var files = path.GetFiles();
             var i = 0;
@@ -175,7 +176,19 @@ namespace ConsoleAddItem
                 Console.WriteLine("Uploaded picture: " + i.ToString());
                 i++;
             }
+            
 
+
+            /*
+            var path = new DirectoryInfo(@"C:\Users\Gunther\Documents\GitHub\guntherkroth\pic");
+            var files = path.GetFiles();
+            var i = 0;
+            foreach (var file in files)
+            {
+                s.Add("https://guntherkroth.com/pic/" + file.Name);
+                i++;
+            }
+            */
 
             item.PictureDetails = pics;
 
