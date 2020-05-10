@@ -55,7 +55,7 @@
       <HintPath>..\..\..\eBay.Service.dll</HintPath>
     </Reference>
     <Reference Include="IronXL">
-      <HintPath>bin\Debug\IronXL\net45\IronXL.dll</HintPath>
+      <HintPath>..\IronXL\net45\IronXL.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
