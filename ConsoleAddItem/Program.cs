@@ -1,12 +1,12 @@
 using System;
 using System.Configuration;
-using System.Collections.Generic;
 using eBay.Service.Call;
 using eBay.Service.Core.Sdk;
 using eBay.Service.Core.Soap;
 using eBay.Service.Util;
 using System.IO;
-using System.Text;
+using IronXL;
+using System.Collections.Generic;
 
 namespace ConsoleAddItem
 {
@@ -23,36 +23,70 @@ namespace ConsoleAddItem
 
             try {
                 Console.WriteLine("+++++++++++++++++++++++++++++++++++++++");
-                Console.WriteLine("+ Welcome to eBay SDK for .Net Sample +");
-                Console.WriteLine("+ - ConsoleAddItem                    +");
-                Console.WriteLine("+++++++++++++++++++++++++++++++++++++++");
+                Console.WriteLine("+  Listing Individual Pokemon Cards   +");
+                Console.WriteLine("+++++++++++++++++++++++++++++++++++++++\n\n");
 
                 //[Step 1] Initialize eBay ApiContext object
                 ApiContext apiContext = GetApiContext();
 
-                //[Step 2] Create a new ItemType object
-                ItemType item = BuildItem();
+                // search through spreadsheet
+                var workbook = WorkBook.Load(@"C:\Users\Gunther\Desktop\pokemonSpread.xlsx");
+                var sheet = workbook.GetWorkSheet("IndividualCards");
 
-
-                //[Step 3] Create Call object and execute the Call
-                AddItemCall apiCall = new AddItemCall(apiContext);
-                Console.WriteLine("Begin to call eBay API, please wait ...");
-                FeeTypeCollection fees = apiCall.AddItem(item);
-                Console.WriteLine("End to call eBay API, show call result ...");
-                Console.WriteLine();
-
-                //[Step 4] Handle the result returned
-                Console.WriteLine("The item was listed successfully!");
-                double listingFee = 0.0;
-                foreach (FeeType fee in fees)
+                for (var i = 2; i < 12; i++)
                 {
-                    if (fee.Name == "ListingFee")
+                    var listed = sheet[$"A{i}"].StringValue;
+                    if (listed == "Y")
                     {
-                        listingFee = fee.Fee.Value;
+                        continue;
+                    }
+
+                    var id = sheet[$"B{i}"].StringValue;
+                    var name = sheet[$"C{i}"].StringValue;
+                    var number = sheet[$"D{i}"].StringValue;
+                    var foil = sheet[$"E{i}"].StringValue;
+                    var rarity = sheet[$"F{i}"].StringValue;
+                    var set = sheet[$"G{i}"].StringValue;
+                    var condition = sheet[$"H{i}"].StringValue;
+                    var defects = sheet[$"I{i}"].StringValue;
+                    var location = sheet[$"J{i}"].StringValue;
+                    var price = sheet[$"K{i}"].DoubleValue;
+
+                    Console.WriteLine("Listring Card #" + id);
+
+                    var title = BuildItemTitle(name, number, foil, set, condition);
+                    if (title.Length > 80)
+                    {
+                        Console.WriteLine("Did not list: " + name);
+                        Console.WriteLine("Title too long");
+                        continue;
+                    }
+
+                    ItemType item = BuildItem(id, title, name, foil, rarity, set, condition, defects, location, price);
+
+                    //[Step 3] Create Call object and execute the Call
+                    Console.WriteLine("Calling API");
+                    AddItemCall apiCall = new AddItemCall(apiContext);
+                    FeeTypeCollection fees = apiCall.AddItem(item);
+
+                    Console.WriteLine("Listed Item");
+                    double listingfee = 0.0;
+                    foreach (FeeType fee in fees)
+                    {
+                        if (fee.Name == "ListingFee")
+                        {
+                            listingfee = fee.Fee.Value;
+                        }
+                    }
+                    Console.WriteLine("Fees: " + listingfee);
+                    Console.WriteLine("ItemID: " + item.ItemID);
+                    if (listingfee > 0.0)
+                    {
+                        Console.WriteLine("\n\nStopping. Listing fees accumulated.");
+                        Environment.Exit(0);
                     }
                 }
-                Console.WriteLine(String.Format("Listing fee is: {0}", listingFee));
-                Console.WriteLine(String.Format("Listed Item ID: {0}", item.ItemID));
+
             } 
             catch (Exception ex)
             {
@@ -60,8 +94,7 @@ namespace ConsoleAddItem
             }
 
             Console.WriteLine();
-            Console.WriteLine("Press any key to close the program.");
-            Console.ReadKey();
+            Console.WriteLine("All cards have been listed.");
 
         }
 
@@ -105,25 +138,100 @@ namespace ConsoleAddItem
             }
         }
 
+        static string BuildItemTitle(string name, string number, string foil, string set, string condition)
+        {
+            Console.WriteLine("Building title");
+
+            var title = name + " " + number + " " + foil + " " + set + " ";
+
+            switch (condition)
+            {
+                case "M":
+                    title += "NM/M Mint";
+                    break;
+                case "NM":
+                    title += "NM/M Near Mint";
+                    break;
+                case "LP":
+                    title += "LP Lightly Played";
+                    break;
+                case "MP":
+                    title += "MP Moderately Played";
+                    break;
+                case "HP":
+                    title += "HP Heavily Played";
+                    break;
+                case "D":
+                    title += "Damaged";
+                    break;
+                default:
+                    title += "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+                    break;
+            }
+
+            title += " " + "Pokemon Card";
+            return title;
+        }
+
+        static string BuildItemDescription(string title, string condition, string defects, string location)
+        {
+            var description = title + "\n\n";
+
+            description += "Condition is ";
+            switch (condition)
+            {
+                case "M":
+                    description += "Mint";
+                    break;
+                case "NM":
+                    description += "Near Mint";
+                    break;
+                case "LP":
+                    description += "Lightly Played";
+                    break;
+                case "MP":
+                    description += "Moderately Played";
+                    break;
+                case "HP":
+                    description += "Heavily Played";
+                    break;
+                case "D":
+                    description += "Damaged";
+                    break;
+                default:
+                    break;
+            }
+            description += "." + "\n";
+            description += "Any card flaws/blemishes are visible in the pictures.\n";
+            description += "Please note " + defects + " on the " + location + " of the card.\n\n";
+
+            description += "All cards will be shipped with a KMC Perfect Fit sleeve, top loader, and bubble mailer. Combined shipping is also available.\n\n";
+
+            description += "Check out my other listings for more 2000s era cards (EX, Diamond & Pearl, Platinum).";
+
+            return description;
+        }
+
         /// <summary>
         /// Build a sample item
         /// </summary>
         /// <returns>ItemType object</returns>
-        static ItemType BuildItem()
+        static ItemType BuildItem(string id, string title, string name, string foil, string rarity, string set, string condition, string defects, string location, double price)
         {
+            Console.WriteLine("Building Item");
             ItemType item = new ItemType();
 
             // item title
-            item.Title = "Goudon EX";
+            item.Title = title;
             // item description
-            item.Description = "Groudon EX";
+            item.Description = BuildItemDescription(title, condition, defects, location);
 
             // listing type
             item.ListingType = ListingTypeCodeType.Chinese;
             // listing price
             item.Currency = CurrencyCodeType.USD;
             item.StartPrice = new AmountType();
-            item.StartPrice.Value = 99.99;
+            item.StartPrice.Value = price;
             item.StartPrice.currencyID = CurrencyCodeType.USD;
 
             // listing duration
@@ -137,19 +245,21 @@ namespace ConsoleAddItem
 
             // listing category, 
             CategoryType category = new CategoryType();
-            category.CategoryID = "2611"; //CategoryID = 11104 (CookBooks) , Parent CategoryID=267(Books)
+            category.CategoryID = "2611"; //CategoryID = 2611 
             item.PrimaryCategory = category;
              
             // item quality
             item.Quantity = 1;
 
-            // item condition, New
+            // item condition, Used
             item.ConditionID = 3000;
 
             // item specifics
-            item.ItemSpecifics = buildItemSpecifics();
+            item.ItemSpecifics = buildItemSpecifics(set, rarity, foil, name);
 
             // picture
+            Console.Write("Uploading Pictures: ");
+
             var pics = new PictureDetailsType();
             var s = new StringCollection();
             pics.PictureURL = s;
@@ -158,10 +268,13 @@ namespace ConsoleAddItem
             eBay.Service.EPS.eBayPictureService eps = new eBay.Service.EPS.eBayPictureService(GetApiContext());
             UploadSiteHostedPicturesRequestType req = new UploadSiteHostedPicturesRequestType();
 
-            
-            var path = new DirectoryInfo(@"C:\Program Files (x86)\eBay\eBay .NET SDK v1131 Release\Samples\C#\ConsoleAddItem\groudon");
+            var folder = @"C:\Users\Gunther\Desktop\pics\";
+            folder += id;
+
+
+            var path = new DirectoryInfo(folder);
             var files = path.GetFiles();
-            var i = 0;
+            var i = 1;
             foreach (var file in files) 
             {
                 byte[] arr = File.ReadAllBytes(file.FullName);
@@ -173,9 +286,10 @@ namespace ConsoleAddItem
                 UploadSiteHostedPicturesResponseType res = eps.UpLoadSiteHostedPicture(req, file.FullName);
                 s.Add(res.SiteHostedPictureDetails.FullURL);
 
-                Console.WriteLine("Uploaded picture: " + i.ToString());
+                Console.WriteLine(i.ToString() + " ");
                 i++;
             }
+            Console.WriteLine("done");
             
 
 
@@ -193,72 +307,26 @@ namespace ConsoleAddItem
             item.PictureDetails = pics;
 
 
-            Console.WriteLine("Do you want to use Business policy profiles to list this item? y/n");
-            String input = Console.ReadLine();
-            if (input.ToLower().Equals("y"))
-            {
-                item.SellerProfiles = BuildSellerProfiles();
-            }
-            else
-            {
-                // payment methods
-                item.PaymentMethods = new BuyerPaymentMethodCodeTypeCollection();
-                item.PaymentMethods.AddRange(
-                    new BuyerPaymentMethodCodeType[] { BuyerPaymentMethodCodeType.PayPal }
-                    );
-                // email is required if paypal is used as payment method
-                item.PayPalEmailAddress = "goose.bones12@gmail.com";
+            // payment methods
+            item.PaymentMethods = new BuyerPaymentMethodCodeTypeCollection();
+            item.PaymentMethods.AddRange(
+                new BuyerPaymentMethodCodeType[] { BuyerPaymentMethodCodeType.PayPal }
+                );
+            // email is required if paypal is used as payment method
+            item.PayPalEmailAddress = "goose.bones12@gmail.com";
 
-                // handling time is required
-                item.DispatchTimeMax = 1;
-                // shipping details
-                item.ShippingDetails = BuildShippingDetails();
+            // handling time is required
+            item.DispatchTimeMax = 2;
+            // shipping details
+            item.ShippingDetails = BuildShippingDetails();
 
-                // return policy
-                item.ReturnPolicy = new ReturnPolicyType();
-                item.ReturnPolicy.ReturnsAcceptedOption = "ReturnsNotAccepted";
-            }
-            //item Start Price
-            AmountType amount = new AmountType();
-            amount.Value = 99.99;
-            amount.currencyID = CurrencyCodeType.USD;
-            item.StartPrice = amount;
-
+            // return policy
+            item.ReturnPolicy = new ReturnPolicyType();
+            item.ReturnPolicy.ReturnsAcceptedOption = "ReturnsNotAccepted";
             
             return item;
         }
 
-        /// <summary>
-        /// Build sample SellerProfile details
-        /// </summary>
-        /// <returns></returns>
-        static SellerProfilesType BuildSellerProfiles()
-        {
-            /*
-             * Beginning with release 763, some of the item fields from
-             * the AddItem/ReviseItem/VerifyItem family of calls have been
-             * moved to the Business Policies API. 
-             * See http://developer.ebay.com/Devzone/business-policies/Concepts/BusinessPoliciesAPIGuide.html for more
-             * 
-             * This example uses profiles that were previously created using this api.
-             */
-
-            SellerProfilesType sellerProfile = new SellerProfilesType();
-      
-            Console.WriteLine("Enter Return policy profile Id:");            
-            sellerProfile.SellerReturnProfile = new SellerReturnProfileType();
-            sellerProfile.SellerReturnProfile.ReturnProfileID = Int64.Parse(Console.ReadLine());
-
-            Console.WriteLine("Enter Shipping profile Id:");            
-            sellerProfile.SellerShippingProfile = new SellerShippingProfileType();
-            sellerProfile.SellerShippingProfile.ShippingProfileID = Int64.Parse(Console.ReadLine());
-
-            Console.WriteLine("Enter Payment profile Id:");            
-            sellerProfile.SellerPaymentProfile = new SellerPaymentProfileType();
-            sellerProfile.SellerPaymentProfile.PaymentProfileID = Int64.Parse(Console.ReadLine());
-
-            return sellerProfile;
-        }
 
         /// <summary>
         /// Build sample shipping details
@@ -311,7 +379,7 @@ namespace ConsoleAddItem
         /// Build sample item specifics
         /// </summary>
         /// <returns>ItemSpecifics object</returns>
-        static NameValueListTypeCollection buildItemSpecifics()
+        static NameValueListTypeCollection buildItemSpecifics(string set, string rarity, string features, string name)
         {        	  
 	        //create the content of item specifics
             NameValueListTypeCollection nvCollection = new NameValueListTypeCollection();
@@ -319,28 +387,28 @@ namespace ConsoleAddItem
             NameValueListType nv1 = new NameValueListType();
             nv1.Name = "Set";
             StringCollection nv1Col = new StringCollection();
-            String[] strArr1 = new string[] { "EX Crystal Guardians" };
+            String[] strArr1 = new string[] { set };
             nv1Col.AddRange(strArr1);
             nv1.Value = nv1Col;
             
             NameValueListType nv2 = new NameValueListType();
             nv2.Name = "Rarity";
             StringCollection nv2Col = new StringCollection();
-            String[] strArr2 = new string[] { "Ultra Rare" };
+            String[] strArr2 = new string[] { rarity };
             nv2Col.AddRange(strArr2);
             nv2.Value = nv2Col;
 
             NameValueListType nv3 = new NameValueListType();
             nv3.Name = "Features";
             StringCollection nv3Col = new StringCollection();
-            String[] strArr3 = new string[] { "Holo" };
+            String[] strArr3 = new string[] { features };
             nv3Col.AddRange(strArr3);
             nv3.Value = nv3Col;
 
             NameValueListType nv4 = new NameValueListType();
             nv4.Name = "Featured Cards";
             StringCollection nv4Col = new StringCollection();
-            String[] strArr4 = new string[] { "Groudon" };
+            String[] strArr4 = new string[] { name };
             nv4Col.AddRange(strArr4);
             nv4.Value = nv4Col;
 
