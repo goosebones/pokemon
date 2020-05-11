@@ -8,6 +8,7 @@ using System.IO;
 using Excel = Microsoft.Office.Interop.Excel;
 using System.Diagnostics.Eventing.Reader;
 using System.Data.SqlTypes;
+using System.Runtime.InteropServices;
 
 namespace ConsoleAddItem
 {
@@ -38,7 +39,7 @@ namespace ConsoleAddItem
             var rowCount = range.Rows.Count;
             var cells = range.Cells;
 
-            for (int row = 2; row < rowCount; row++)
+            for (int row = 2; row < rowCount + 1; row++)
             {
                 try
                 {
@@ -63,7 +64,7 @@ namespace ConsoleAddItem
                     var location = cells[row, 10].Value2;
                     var price = cells[row, 11].Value2;
 
-                    Console.WriteLine("Listring Card #" + id);
+                    Console.WriteLine("Listing Card #" + id);
 
                     var title = BuildItemTitle(name, number, foil, set, condition);
                     if (title.Length > 80)
@@ -105,6 +106,14 @@ namespace ConsoleAddItem
                 }
             }
 
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            Marshal.ReleaseComObject(range);
+            Marshal.ReleaseComObject(sheet);
+            workbook.Close(0);
+            Marshal.ReleaseComObject(workbook);
+            xlApp.Quit();
+            Marshal.ReleaseComObject(xlApp);
             Console.WriteLine();
             Console.WriteLine("Finished.");
             Console.ReadKey();
