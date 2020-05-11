@@ -64,7 +64,7 @@ namespace ListCards
                     // build the eBay listing
                     Console.WriteLine("Listing Card #" + id);
                     var title = BuildItemTitle(name, number, foil, set, condition);
-
+                    
                     // eBay titles cannot be longer that 80 characters
                     if (title.Length > 80)
                     {
@@ -77,16 +77,16 @@ namespace ListCards
                     }
 
                     ItemType item = BuildItem(id, title, name, foil, rarity, set, condition, defects, location, price);
-
+                    
                     // Create Call object and execute the Call
                     Console.WriteLine("Calling API");
                     AddItemCall apiCall = new AddItemCall(apiContext);
                     FeeTypeCollection fees = apiCall.AddItem(item);
-
+                    
                     // alert success and update Spreadsheet flag
                     Console.WriteLine("Listed Item");
-                    sheet.Cells[row, 1] = "Y"; //TODO
-
+                    sheet.Cells[row, 1] = "Y";
+                    
                     // eBay api call will return any fees associated with a listing
                     double listingfee = 0.0;
                     foreach (FeeType fee in fees)
@@ -106,7 +106,7 @@ namespace ListCards
                         Console.ReadKey();
                         Environment.Exit(0);
                     }
-
+                    
                 } catch (Exception ex)
                 {
                     // some error in listing item
@@ -116,13 +116,12 @@ namespace ListCards
             }
 
             // clean up the Excel Spreadsheet
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            Marshal.ReleaseComObject(range);
-            Marshal.ReleaseComObject(sheet);
-            workbook.Close(0);
-            Marshal.ReleaseComObject(workbook);
+            workbook.Save();
+            xlApp.DisplayAlerts = false;
+            workbook.Close(false);
             xlApp.Quit();
+            Marshal.ReleaseComObject(sheet);
+            Marshal.ReleaseComObject(workbook);
             Marshal.ReleaseComObject(xlApp);
 
             // alert success
