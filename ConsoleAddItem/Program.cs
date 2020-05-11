@@ -5,8 +5,9 @@ using eBay.Service.Core.Sdk;
 using eBay.Service.Core.Soap;
 using eBay.Service.Util;
 using System.IO;
-using IronXL;
-using System.Collections.Generic;
+using Excel = Microsoft.Office.Interop.Excel;
+using System.Diagnostics.Eventing.Reader;
+using System.Data.SqlTypes;
 
 namespace ConsoleAddItem
 {
@@ -21,36 +22,46 @@ namespace ConsoleAddItem
         static void Main(string[] args)
         {
 
-            try {
-                Console.WriteLine("+++++++++++++++++++++++++++++++++++++++");
-                Console.WriteLine("+  Listing Individual Pokemon Cards   +");
-                Console.WriteLine("+++++++++++++++++++++++++++++++++++++++\n\n");
+            Console.WriteLine("+++++++++++++++++++++++++++++++++++++++");
+            Console.WriteLine("+  Listing Individual Pokemon Cards   +");
+            Console.WriteLine("+++++++++++++++++++++++++++++++++++++++\n");
 
-                //[Step 1] Initialize eBay ApiContext object
-                ApiContext apiContext = GetApiContext();
+            //[Step 1] Initialize eBay ApiContext object
+            ApiContext apiContext = GetApiContext();
 
-                // search through spreadsheet
-                var workbook = WorkBook.Load(@"C:\Users\Gunther\Desktop\pokemonSpread.xlsx");
-                var sheet = workbook.GetWorkSheet("IndividualCards");
+            // search through spreadsheet
+            Excel.Application xlApp = new Excel.Application();
+            Excel.Workbook workbook = xlApp.Workbooks.Open(@"C:\Users\Gunther\Desktop\pokemonSpread.xlsx");
+            Excel.Worksheet sheet = workbook.Sheets[1];
+            Excel.Range range = sheet.UsedRange;
 
-                for (var i = 2; i < 12; i++)
+            var rowCount = range.Rows.Count;
+            var cells = range.Cells;
+
+            for (int row = 2; row < rowCount; row++)
+            {
+                try
                 {
-                    var listed = sheet[$"A{i}"].StringValue;
+
+
+                    Console.WriteLine();
+
+                    var listed = cells[row, 1].Value2;
                     if (listed == "Y")
                     {
                         continue;
                     }
 
-                    var id = sheet[$"B{i}"].StringValue;
-                    var name = sheet[$"C{i}"].StringValue;
-                    var number = sheet[$"D{i}"].StringValue;
-                    var foil = sheet[$"E{i}"].StringValue;
-                    var rarity = sheet[$"F{i}"].StringValue;
-                    var set = sheet[$"G{i}"].StringValue;
-                    var condition = sheet[$"H{i}"].StringValue;
-                    var defects = sheet[$"I{i}"].StringValue;
-                    var location = sheet[$"J{i}"].StringValue;
-                    var price = sheet[$"K{i}"].DoubleValue;
+                    var id = cells[row, 2].Value2.ToString();
+                    var name = cells[row, 3].Value2;
+                    var number = cells[row, 4].Value2;
+                    var foil = cells[row, 5].Value2;
+                    var rarity = cells[row, 6].Value2;
+                    var set = cells[row, 7].Value2;
+                    var condition = cells[row, 8].Value2;
+                    var defects = cells[row, 9].Value2;
+                    var location = cells[row, 10].Value2;
+                    var price = cells[row, 11].Value2;
 
                     Console.WriteLine("Listring Card #" + id);
 
@@ -70,6 +81,8 @@ namespace ConsoleAddItem
                     FeeTypeCollection fees = apiCall.AddItem(item);
 
                     Console.WriteLine("Listed Item");
+                    sheet.Cells[row, 1] = "Y";
+
                     double listingfee = 0.0;
                     foreach (FeeType fee in fees)
                     {
@@ -83,18 +96,18 @@ namespace ConsoleAddItem
                     if (listingfee > 0.0)
                     {
                         Console.WriteLine("\n\nStopping. Listing fees accumulated.");
+                        Console.ReadKey();
                         Environment.Exit(0);
                     }
+                } catch (Exception ex)
+                {
+                    Console.WriteLine("Failed to list the item: " + ex.Message);
                 }
-
-            } 
-            catch (Exception ex)
-            {
-                Console.WriteLine("Fail to list the item : " + ex.Message);
             }
 
             Console.WriteLine();
-            Console.WriteLine("All cards have been listed.");
+            Console.WriteLine("Finished.");
+            Console.ReadKey();
 
         }
 
@@ -165,17 +178,26 @@ namespace ConsoleAddItem
                     title += "Damaged";
                     break;
                 default:
-                    title += "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
                     break;
             }
-
-            title += " " + "Pokemon Card";
+            
+            if (title.Length <= 67)
+            {
+                title += " Pokemon Card";
+            } else if (title.Length <= 72)
+            {
+                title += " Pokemon";
+            } else if (title.Length <= 75)
+            {
+                title += " Card";
+            }
             return title;
         }
 
         static string BuildItemDescription(string title, string condition, string defects, string location)
         {
-            var description = title + "\n\n";
+            var description = "<div vocab=\"https://schema.org/\" typeof=\"Product\"><span property=\"description\">";
+            description += title + "<br><br>";
 
             description += "Condition is ";
             switch (condition)
@@ -201,14 +223,15 @@ namespace ConsoleAddItem
                 default:
                     break;
             }
-            description += "." + "\n";
-            description += "Any card flaws/blemishes are visible in the pictures.\n";
-            description += "Please note " + defects + " on the " + location + " of the card.\n\n";
+            description += "." + "<br>";
+            description += "Any card flaws/blemishes are visible in the pictures.<br>";
+            description += "Please note " + defects + " on the " + location + " of the card.<br><br>";
 
-            description += "All cards will be shipped with a KMC Perfect Fit sleeve, top loader, and bubble mailer. Combined shipping is also available.\n\n";
+            description += "All cards will be shipped with a KMC Perfect Fit sleeve, top loader, and bubble mailer. Combined shipping is also available.<br>";
 
             description += "Check out my other listings for more 2000s era cards (EX, Diamond & Pearl, Platinum).";
 
+            description += "</span></div>";
             return description;
         }
 
@@ -236,7 +259,7 @@ namespace ConsoleAddItem
 
             // listing duration
             item.ListingDuration = "Days_7";
-            var startTime = new DateTime(2020, 5, 11, 0, 30, 0, DateTimeKind.Utc);
+            var startTime = new DateTime(2020, 5, 11, 2, 30, 0, DateTimeKind.Utc);
             item.ScheduleTime = startTime;
 
             // item location and country
@@ -286,7 +309,7 @@ namespace ConsoleAddItem
                 UploadSiteHostedPicturesResponseType res = eps.UpLoadSiteHostedPicture(req, file.FullName);
                 s.Add(res.SiteHostedPictureDetails.FullURL);
 
-                Console.WriteLine(i.ToString() + " ");
+                Console.Write(i.ToString() + " ");
                 i++;
             }
             Console.WriteLine("done");
