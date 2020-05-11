@@ -6,15 +6,12 @@ using eBay.Service.Core.Soap;
 using eBay.Service.Util;
 using System.IO;
 using Excel = Microsoft.Office.Interop.Excel;
-using System.Diagnostics.Eventing.Reader;
-using System.Data.SqlTypes;
 using System.Runtime.InteropServices;
 
-namespace ConsoleAddItem
+namespace ListCards
 {
     /// <summary>
-    /// A simple item adding sample,
-    /// show basic flow to list an item to eBay Site using eBay SDK.
+    /// Create listings for cards in an external Excel Spreadsheet.
     /// </summary>
     class Program
     {
@@ -27,32 +24,32 @@ namespace ConsoleAddItem
             Console.WriteLine("+  Listing Individual Pokemon Cards   +");
             Console.WriteLine("+++++++++++++++++++++++++++++++++++++++\n");
 
-            //[Step 1] Initialize eBay ApiContext object
+            // Initialize eBay ApiContext object
             ApiContext apiContext = GetApiContext();
 
-            // search through spreadsheet
+            // get reference to Spreadsheet
             Excel.Application xlApp = new Excel.Application();
             Excel.Workbook workbook = xlApp.Workbooks.Open(@"C:\Users\Gunther\Desktop\pokemonSpread.xlsx");
             Excel.Worksheet sheet = workbook.Sheets[1];
             Excel.Range range = sheet.UsedRange;
-
             var rowCount = range.Rows.Count;
             var cells = range.Cells;
 
+            // each row in the sheet is one card to list 
             for (int row = 2; row < rowCount + 1; row++)
             {
                 try
                 {
-
-
                     Console.WriteLine();
 
+                    // cell contains a flag if this card was already listed
                     var listed = cells[row, 1].Value2;
                     if (listed == "Y")
                     {
                         continue;
                     }
 
+                    // get details for the card 
                     var id = cells[row, 2].Value2.ToString();
                     var name = cells[row, 3].Value2;
                     var number = cells[row, 4].Value2;
@@ -64,26 +61,33 @@ namespace ConsoleAddItem
                     var location = cells[row, 10].Value2;
                     var price = cells[row, 11].Value2;
 
+                    // build the eBay listing
                     Console.WriteLine("Listing Card #" + id);
-
                     var title = BuildItemTitle(name, number, foil, set, condition);
+
+                    // eBay titles cannot be longer that 80 characters
                     if (title.Length > 80)
                     {
                         Console.WriteLine("Did not list: " + name);
                         Console.WriteLine("Title too long");
+                        // skip this card if its too long
+                        // this card must be changed in the Spreadsheet,
+                        // or it can be listed manually
                         continue;
                     }
 
                     ItemType item = BuildItem(id, title, name, foil, rarity, set, condition, defects, location, price);
 
-                    //[Step 3] Create Call object and execute the Call
+                    // Create Call object and execute the Call
                     Console.WriteLine("Calling API");
                     AddItemCall apiCall = new AddItemCall(apiContext);
                     FeeTypeCollection fees = apiCall.AddItem(item);
 
+                    // alert success and update Spreadsheet flag
                     Console.WriteLine("Listed Item");
-                    sheet.Cells[row, 1] = "Y";
+                    sheet.Cells[row, 1] = "Y"; //TODO
 
+                    // eBay api call will return any fees associated with a listing
                     double listingfee = 0.0;
                     foreach (FeeType fee in fees)
                     {
@@ -94,18 +98,24 @@ namespace ConsoleAddItem
                     }
                     Console.WriteLine("Fees: " + listingfee);
                     Console.WriteLine("ItemID: " + item.ItemID);
+
+                    // if there are listing fees, stop 
                     if (listingfee > 0.0)
                     {
                         Console.WriteLine("\n\nStopping. Listing fees accumulated.");
                         Console.ReadKey();
                         Environment.Exit(0);
                     }
+
                 } catch (Exception ex)
                 {
+                    // some error in listing item
+                    // this will most likely be thrown by the eBay api call
                     Console.WriteLine("Failed to list the item: " + ex.Message);
                 }
             }
 
+            // clean up the Excel Spreadsheet
             GC.Collect();
             GC.WaitForPendingFinalizers();
             Marshal.ReleaseComObject(range);
@@ -114,6 +124,8 @@ namespace ConsoleAddItem
             Marshal.ReleaseComObject(workbook);
             xlApp.Quit();
             Marshal.ReleaseComObject(xlApp);
+
+            // alert success
             Console.WriteLine();
             Console.WriteLine("Finished.");
             Console.ReadKey();
@@ -155,11 +167,19 @@ namespace ConsoleAddItem
                     );
                 apiContext.ApiLogManager.EnableLogging = true;
 
-
                 return apiContext;
             }
         }
-
+        
+        /// <summary>
+        /// Build the title of an Item listing
+        /// </summary>
+        /// <param name="name">Name of card</param>
+        /// <param name="number">Set number</param>
+        /// <param name="foil">Foil of card</param>
+        /// <param name="set">Set the card belongs to</param>
+        /// <param name="condition">Condition of card</param>
+        /// <returns>Formatted title for the card listing</returns>
         static string BuildItemTitle(string name, string number, string foil, string set, string condition)
         {
             Console.WriteLine("Building title");
@@ -190,6 +210,8 @@ namespace ConsoleAddItem
                     break;
             }
             
+            // check to see if 'Pokemon Card' can be added to title
+            // title can be a max length of 80 characters
             if (title.Length <= 67)
             {
                 title += " Pokemon Card";
@@ -200,11 +222,21 @@ namespace ConsoleAddItem
             {
                 title += " Card";
             }
+
             return title;
         }
 
+        /// <summary>
+        /// Build the description of a card listing.
+        /// </summary>
+        /// <param name="title">Title of card listing</param>
+        /// <param name="condition">Condition of the card</param>
+        /// <param name="defects">Any defects in the card</param>
+        /// <param name="location">Location of defects</param>
+        /// <returns></returns>
         static string BuildItemDescription(string title, string condition, string defects, string location)
         {
+            // eBay uses HTML to format descriptions
             var description = "<div vocab=\"https://schema.org/\" typeof=\"Product\"><span property=\"description\">";
             description += title + "<br><br>";
 
@@ -245,9 +277,19 @@ namespace ConsoleAddItem
         }
 
         /// <summary>
-        /// Build a sample item
+        /// Build a card Item
         /// </summary>
-        /// <returns>ItemType object</returns>
+        /// <param name="id">ID of card in Excel Spreadsheet</param>
+        /// <param name="title">Title of card listing</param>
+        /// <param name="name">name of card</param>
+        /// <param name="foil">foil of card</param>
+        /// <param name="rarity">rarity of card</param>
+        /// <param name="set">set that the card belongs to</param>
+        /// <param name="condition">condition of the card</param>
+        /// <param name="defects">any defects of the card</param>
+        /// <param name="location">location of the defects</param>
+        /// <param name="price">starting price of the card</param>
+        /// <returns></returns>
         static ItemType BuildItem(string id, string title, string name, string foil, string rarity, string set, string condition, string defects, string location, double price)
         {
             Console.WriteLine("Building Item");
@@ -260,6 +302,7 @@ namespace ConsoleAddItem
 
             // listing type
             item.ListingType = ListingTypeCodeType.Chinese;
+
             // listing price
             item.Currency = CurrencyCodeType.USD;
             item.StartPrice = new AmountType();
@@ -289,32 +332,34 @@ namespace ConsoleAddItem
             // item specifics
             item.ItemSpecifics = buildItemSpecifics(set, rarity, foil, name);
 
-            // picture
+            // upload pictures to EPS (eBay Picture Services)
             Console.Write("Uploading Pictures: ");
 
             var pics = new PictureDetailsType();
             var s = new StringCollection();
             pics.PictureURL = s;
-
-
             eBay.Service.EPS.eBayPictureService eps = new eBay.Service.EPS.eBayPictureService(GetApiContext());
             UploadSiteHostedPicturesRequestType req = new UploadSiteHostedPicturesRequestType();
 
+            // pictures for each card are located in a folder that matches 
+            // the ID from the Spreadsheet
             var folder = @"C:\Users\Gunther\Desktop\pics\";
             folder += id;
 
-
+            // each picture in the folder gets uploaded
             var path = new DirectoryInfo(folder);
             var files = path.GetFiles();
             var i = 1;
             foreach (var file in files) 
             {
+                // picstures are based an binary objects to EPS
                 byte[] arr = File.ReadAllBytes(file.FullName);
                 Base64BinaryType b = new Base64BinaryType();
                 b.Value = arr;
                 req.PictureName = file.FullName + i.ToString();
                 req.PictureData = b;
 
+                // api responds contains the URL of the picure 
                 UploadSiteHostedPicturesResponseType res = eps.UpLoadSiteHostedPicture(req, file.FullName);
                 s.Add(res.SiteHostedPictureDetails.FullURL);
 
@@ -322,22 +367,9 @@ namespace ConsoleAddItem
                 i++;
             }
             Console.WriteLine("done");
-            
 
-
-            /*
-            var path = new DirectoryInfo(@"C:\Users\Gunther\Documents\GitHub\guntherkroth\pic");
-            var files = path.GetFiles();
-            var i = 0;
-            foreach (var file in files)
-            {
-                s.Add("https://guntherkroth.com/pic/" + file.Name);
-                i++;
-            }
-            */
-
+            // a collection of EPS urls are added the the Item listing
             item.PictureDetails = pics;
-
 
             // payment methods
             item.PaymentMethods = new BuyerPaymentMethodCodeTypeCollection();
@@ -349,6 +381,7 @@ namespace ConsoleAddItem
 
             // handling time is required
             item.DispatchTimeMax = 2;
+
             // shipping details
             item.ShippingDetails = BuildShippingDetails();
 
@@ -372,15 +405,11 @@ namespace ConsoleAddItem
             sd.ApplyShippingDiscountSpecified = true;
             sd.ApplyShippingDiscount = false;
             sd.CalculatedShippingDiscount = null;
-
             sd.FlatShippingDiscount = null;
-
             sd.GlobalShipping = false;
             sd.GlobalShippingSpecified = false;
-
             sd.SellerExcludeShipToLocationsPreferenceSpecified = true;
             sd.SellerExcludeShipToLocationsPreference = false;
-
 
             // Shipping type and shipping service options
             sd.ShippingType = ShippingTypeCodeType.Flat;
@@ -397,7 +426,6 @@ namespace ConsoleAddItem
             amount.Value = 2.95;
             amount.currencyID = CurrencyCodeType.USD;
             shippingOptions.ShippingServiceCost = amount;
-
             shippingOptions.ShippingInsuranceCost = null;
 
             sd.ShippingServiceOptions = new ShippingServiceOptionsTypeCollection(
@@ -408,9 +436,13 @@ namespace ConsoleAddItem
         }
 
         /// <summary>
-        /// Build sample item specifics
+        /// Build Item Specifics for a card Item
         /// </summary>
-        /// <returns>ItemSpecifics object</returns>
+        /// <param name="set">Set that the card belongs to</param>
+        /// <param name="rarity">Rarity of the card</param>
+        /// <param name="features">Foil of the card</param>
+        /// <param name="name">Name of the card</param>
+        /// <returns></returns>
         static NameValueListTypeCollection buildItemSpecifics(string set, string rarity, string features, string name)
         {        	  
 	        //create the content of item specifics
