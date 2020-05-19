@@ -310,11 +310,12 @@ namespace ListCards
 
             // listing duration
             item.ListingDuration = "Days_7";
-            var startTime = new DateTime(2020, 5, 11, 2, 30, 0, DateTimeKind.Utc);
+            var startTime = new DateTime(2020, 5, 25, 3, 0, 0, DateTimeKind.Utc);
             item.ScheduleTime = startTime;
 
             // item location and country
             item.Location = "Rochester, New York";
+            item.PostalCode = "14624";
             item.Country = CountryCodeType.US;
 
             // listing category, 
